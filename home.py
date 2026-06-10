@@ -18,7 +18,7 @@ current_dir = Path(__file__).parent
 logo_path = current_dir / "static" / "img" / "sales.png"
 
 
-# -------------------- side bar global --------------------------------------
+# ----------------------------- side bar global -------------------------------
 with st.sidebar:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
@@ -34,6 +34,45 @@ with st.sidebar:
     st.page_link("pages/dashboard.py", label="📊 Dashboard")
     st.page_link("pages/sales_trends.py", label="📈 Sales Trends")
     st.page_link("pages/top_products.py", label="🏆 Top Products")
+    st.divider()
+    st.caption("Sumber: PostgreSQL odoo 14")
 
 
+# ----------------------------- Konten Home -------------------------------
+
+st.title("Odoo sales Dashboard")
+st.markdown("Selamat datang! Aplikasi ini menampilkan data penjualan langsung dari database PostgreSQL Odoo.")
+st.divider()
+
+col1, col2, col3 = st.columns(3)
+
+
+with col1:
+    with st.container(border=True):
+        st.markdown("### Dashboard Penjualan 📊")
+        st.markdown(
+            "Ringkasan KPI utama: total revenue, jumlah order, "
+            "pelanggan aktif, dan distribusi status order."
+        )
+        st.page_link("pages/dashboard.py", label="Buka Dashboard →")
+
+with col2:
+    with st.container(border=True):
+        st.markdown("### Tren Penjualan 📈")
+        st.markdown(
+            "Grafik tren revenue dan jumlah order dari waktu ke waktu, "
+            "bisa dilihat per hari maupun per bulan."
+        )
+        st.page_link("pages/sales_trends.py", label="Buka Tren →")
+
+with col3:
+    with st.container(border=True):
+        st.markdown("### Top Produk & Pelanggan 🏆")
+        st.markdown(
+            "Produk terlaris dan pelanggan dengan revenue tertinggi "
+            "dalam periode yang dipilih."
+        )
+        st.page_link("pages/top_products.py", label="Buka Top Produk →")
+
+st.divider()
 
