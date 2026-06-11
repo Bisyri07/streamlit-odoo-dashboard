@@ -76,3 +76,20 @@ with col3:
 
 st.divider()
 
+
+# ----------------------------- Konten Home -------------------------------
+st.subheader("Status Koneksi Database 🔌")
+
+if st.button("Test Koneksi ke PostgreSQL 🔄"):
+    try:
+        from db import run_query
+        df = run_query("SELECT version()")
+        st.success(f"Koneksi berhasil! PostgreSQL version ✅: `{df.iloc[0,0]}`")
+    except Exception as e:
+        st.error(f"❌ Koneksi gagal: {e}")
+        st.info(
+            "Pastikan file `.env` sudah diisi sesuai server PostgreSQL kamu:\n"
+            "```\nDB_HOST=localhost\nDB_PORT=5434\n"
+            "DB_NAME=nama_db_odoo\nDB_USER=odoo\nDB_PASSWORD=password\n```\n"
+            "Kalau PostgreSQL kamu memang berjalan di port lain, ganti `DB_PORT` sesuai port itu."
+        )
