@@ -5,6 +5,7 @@ Halaman: KPI ringkasan + distribusi status order + breakdown salesperson
 
 import os
 import sys
+import locale
 import datetime
 import pandas as pd
 import streamlit as st
@@ -13,7 +14,6 @@ import plotly.graph_objects as go
 
 
 # Tambahkan root project ke path agar bisa import db.py
-
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from db import get_kpi_vs_period, get_status_order, get_revenue_per_salesperson
 
@@ -41,11 +41,9 @@ with st.sidebar:
     st.divider()
 
 
-    st.subheader("🗓️ Filter Periode")
-
     # Preset Periode
     preset = st.selectbox(
-        "Pilih Periode:", [
+        "🗓️ Filter Periode:", [
             "30 Hari Terakhir",
             "Bulan Ini",
             "Bulan Lalu",
@@ -54,6 +52,9 @@ with st.sidebar:
             "Custom",
         ]
     )
+
+    # menggunakan bulan Indonesia
+    locale.setlocale(locale.LC_TIME, 'id_ID.UTF-8')
 
     today = datetime.date.today()
 
@@ -77,6 +78,15 @@ with st.sidebar:
         date_from = st.date_input("Dari tanggal: ", today - datetime.timedelta(days=30))
         date_to = st.date_input("Sampai tanggal: ", today)
 
-    st.caption(f"Periode: **{date_from}** s/d **{date_to}**")
     st.divider()
+
+
+# ════════════════════════════════════════════════════════
+# HEADER
+# ════════════════════════════════════════════════════════
+
+st.title("Sales Dashboard 📊", text_alignment="center")
+st.caption(f"Period: **{date_from.strftime('%d %B %Y')}** to **{date_to.strftime('%d %B %Y')}**", text_alignment="center")
+st.divider()
+
 
