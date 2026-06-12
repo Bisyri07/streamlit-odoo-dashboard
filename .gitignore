@@ -12,3 +12,7 @@ __pycache__/
 
 # Streamlit credentials & config
 .streamlit/
+
+
+# Files
+python-experiment.py

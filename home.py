@@ -24,7 +24,7 @@ with st.sidebar:
     with col2:
         st.image(logo_path, width=130)
 
-    st.title("Odoo sales Dashboard")
+    # st.title("Odoo sales Dashboard")
 
     st.divider()
 
@@ -40,8 +40,8 @@ with st.sidebar:
 
 # ----------------------------- Konten Home -------------------------------
 
-st.title("Odoo sales Dashboard")
-st.markdown("Selamat datang! Aplikasi ini menampilkan data penjualan langsung dari database PostgreSQL Odoo.")
+st.title("Sales Dashboard Homepage", text_alignment="center")
+st.markdown("Selamat datang! Aplikasi ini menampilkan data penjualan langsung dari database PostgreSQL Odoo.", text_alignment="center")
 st.divider()
 
 col1, col2, col3 = st.columns(3)
@@ -78,6 +78,7 @@ st.divider()
 
 
 # ----------------------------- Konten Home -------------------------------
+
 st.subheader("Status Koneksi Database 🔌")
 
 if st.button("Test Koneksi ke PostgreSQL 🔄"):
