@@ -27,7 +27,11 @@ st.set_page_config(
 )
 
 
-# --------------------------------- side bar --------------------------------------
+# ------------------------- menggunakan bulan Indonesia ----------------------------
+locale.setlocale(locale.LC_TIME, 'id_ID.UTF-8')
+
+
+# --------------------------------- side bar ---------------------------------------
 
 with st.sidebar:
     st.title("Dashboard Penjualan")
@@ -53,8 +57,6 @@ with st.sidebar:
         ]
     )
 
-    # menggunakan bulan Indonesia
-    locale.setlocale(locale.LC_TIME, 'id_ID.UTF-8')
 
     today = datetime.date.today()
 
@@ -80,6 +82,18 @@ with st.sidebar:
 
     st.divider()
 
+    # Hitung periode pembanding (sama panjangnya, sebelum periode ini)
+    delta_days = (date_to - date_from).days
+    prev_to = date_from - datetime.timedelta(days=1)
+    prev_from = prev_to - datetime.timedelta(days=delta_days)
+    st.caption(f"dibandingkan: **{prev_from}** s/d **{prev_to}**")
+
+    # st.markdown(f"delta_days: {delta_days}")
+    # st.markdown(f"prev_to: {prev_to}")
+    # st.markdown(f"prev_from: {prev_from}")
+
+    st.divider()
+
 
 # ════════════════════════════════════════════════════════
 # HEADER
@@ -88,5 +102,86 @@ with st.sidebar:
 st.title("Sales Dashboard 📊", text_alignment="center")
 st.caption(f"Period: **{date_from.strftime('%d %B %Y')}** to **{date_to.strftime('%d %B %Y')}**", text_alignment="center")
 st.divider()
+
+
+# ════════════════════════════════════════════════════════
+# KPI CARDS
+# ════════════════════════════════════════════════════════
+
+st.subheader("📌 Ringkasan KPI")
+
+with st.spinner("Memuat data KPI..."):
+    try:
+        kpi = get_kpi_vs_period(
+            str(date_from), str(date_to),
+            str(prev_from), str(prev_to),
+        )
+ 
+        def fmt_indo_number(val, decimal_places=0):
+            if val is None:
+                return "0"
+            # Format dengan standar python (koma untuk ribuan, titik untuk desimal)
+            formatted = f"{val:,.{decimal_places}f}"
+            # Tukar koma menjadi titik, dan desimal titik menjadi koma (format Indonesia)
+            temp = "___TEMP___"
+            formatted = formatted.replace(",", temp).replace(".", ",").replace(temp, ".")
+            return formatted
+
+        def fmt_rupiah(val):
+            if val is None:
+                val = 0
+            if val >= 1_000_000_000:
+                return f"Rp. {fmt_indo_number(val/1_000_000_000, 2)} M"
+            elif val >= 1_000_000:
+                return f"Rp. {fmt_indo_number(val/1_000_000, 1)} Jt"
+            else:
+                return f"Rp. {fmt_indo_number(val, 0)}"
+ 
+        def fmt_delta(val):
+            if val is None:
+                return None
+            sign = "+" if val > 0 else ""
+            return f"{sign}{fmt_indo_number(val, 1)}%"
+ 
+        col1, col2, col3, col4 = st.columns(4)
+ 
+        col1.metric(
+            "💰 Total Revenue",
+            fmt_rupiah(kpi.get("total_revenue", 0)),
+            delta=fmt_delta(kpi.get("revenue_delta")),
+        )
+        col2.metric(
+            "🧾 Jumlah Order",
+            fmt_indo_number(kpi.get('jumlah_order', 0), 0),
+            delta=fmt_delta(kpi.get("order_delta")),
+        )
+        col3.metric(
+            "👥 Pelanggan Aktif",
+            fmt_indo_number(kpi.get('jumlah_pelanggan', 0), 0),
+            delta=fmt_delta(kpi.get("pelanggan_delta")),
+        )
+        col4.metric(
+            "📦 Total Qty Terjual",
+            fmt_indo_number(kpi.get('total_qty', 0), 0),
+            delta=fmt_delta(kpi.get("qty_delta")),
+        )
+ 
+        # KPI tambahan: rata-rata nilai order
+        col5, col6, col7, col8 = st.columns(4)
+        rata = kpi.get("rata_nilai_order", 0)
+        col5.metric("🧮 Rata-rata Nilai Order", fmt_rupiah(rata))
+ 
+        total_rev = kpi.get("total_revenue", 0)
+        n_order   = kpi.get("jumlah_order", 1) or 1
+        n_pelanggan = kpi.get("jumlah_pelanggan", 1) or 1
+ 
+        col6.metric("💵 Revenue per Pelanggan", fmt_rupiah(total_rev / n_pelanggan))
+        col7.metric("📋 Order per Pelanggan",   fmt_indo_number(n_order / n_pelanggan, 1))
+        col8.metric("📅 Hari dalam Periode",    f"{delta_days + 1} hari")
+ 
+        st.caption("⬆️⬇️ Delta dibandingkan periode sebelumnya dengan panjang yang sama.")
+ 
+    except Exception as e:
+        st.error(f"Gagal memuat KPI: {e}")
 
 

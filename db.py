@@ -29,10 +29,10 @@ def get_engine():
         password = st.secrets["DB_PASSWORD"]
     except Exception:
         # Fallback ke .env (untuk lokal)
-        host     = os.getenv("DB_HOST",     "localhost")
-        port     = os.getenv("DB_PORT",     "5432")
-        dbname   = os.getenv("DB_NAME",     "odoo")
-        user     = os.getenv("DB_USER",     "odoo")
+        host     = os.getenv("DB_HOST", "localhost")
+        port     = os.getenv("DB_PORT", "5432")
+        dbname   = os.getenv("DB_NAME", "odoo")
+        user     = os.getenv("DB_USER", "odoo")
         password = os.getenv("DB_PASSWORD", "odoo")
 
     url = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}"
