@@ -131,17 +131,16 @@ with st.spinner("Memuat data KPI..."):
             if val is None:
                 val = 0
             if val >= 1_000_000_000:
-                return f"Rp. {fmt_indo_number(val/1_000_000_000, 2)} M"
+                return f"Rp {val/1_000_000_000:.2f} M"
             elif val >= 1_000_000:
-                return f"Rp. {fmt_indo_number(val/1_000_000, 1)} Jt"
+                return f"Rp {val/1_000_000:.1f} Jt"
             else:
-                return f"Rp. {fmt_indo_number(val, 0)}"
+                return f"Rp {val:,.0f}"
  
         def fmt_delta(val):
             if val is None:
                 return None
-            sign = "+" if val > 0 else ""
-            return f"{sign}{fmt_indo_number(val, 1)}%"
+            return f"{val:+.1f}%"
  
         col1, col2, col3, col4 = st.columns(4)
  
@@ -176,7 +175,7 @@ with st.spinner("Memuat data KPI..."):
         n_pelanggan = kpi.get("jumlah_pelanggan", 1) or 1
  
         col6.metric("💵 Revenue per Pelanggan", fmt_rupiah(total_rev / n_pelanggan))
-        col7.metric("📋 Order per Pelanggan",   fmt_indo_number(n_order / n_pelanggan, 1))
+        col7.metric("📋 Order per Pelanggan",   fmt_rupiah(n_order / n_pelanggan))
         col8.metric("📅 Hari dalam Periode",    f"{delta_days + 1} hari")
  
         st.caption("⬆️⬇️ Delta dibandingkan periode sebelumnya dengan panjang yang sama.")
