@@ -89,7 +89,7 @@ def get_recent_logs(n_lines: int=50) -> str:
 
 def clear_logs():
     """Kosongkan file log — dipakai oleh tombol 'Bersihkan Log' di sidebar."""
-    open(LOG_FILE, "W").close()
+    open(LOG_FILE, "w").close()
 
 
 def log_and_show_error(logger: logging.Logger, e: Exception, context: str, user_msg: str = None):
@@ -125,15 +125,4 @@ def log_and_show_error(logger: logging.Logger, e: Exception, context: str, user_
     if DEBUG_MODE:
         with st.expander(f"🔍 Detail teknis — {context} (DEBUG_MODE)"):
             st.code(traceback.format_exc(), language="python")
-
-
-
-
-
-
-
-
-
-
-
 

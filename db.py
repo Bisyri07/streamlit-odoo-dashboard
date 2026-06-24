@@ -4,10 +4,17 @@ Dipakai bersama oleh semua halaman Streamlit.
 """
 
 import os
-import streamlit as st
 import pandas as pd
-from sqlalchemy import create_engine, text
+import streamlit as st
 from dotenv import load_dotenv
+from sqlalchemy import create_engine, text
+
+
+# ── Logging ─────────────────────────────────────────────
+# __name__ di sini akan bernilai "db" -> log akan tampil sebagai
+from logger_config import get_logger
+logger = get_logger(__name__)
+
 
 # Muat variabel dari file .env
 load_dotenv()
@@ -27,6 +34,7 @@ def get_engine():
         dbname   = st.secrets["DB_NAME"]
         user     = st.secrets["DB_USER"]
         password = st.secrets["DB_PASSWORD"]
+        logger.info("fetch DB configuration")
     except Exception:
         # Fallback ke .env (untuk lokal)
         host     = os.getenv("DB_HOST", "localhost")
@@ -34,17 +42,33 @@ def get_engine():
         dbname   = os.getenv("DB_NAME", "odoo")
         user     = os.getenv("DB_USER", "odoo")
         password = os.getenv("DB_PASSWORD", "odoo")
+        logger.info("DB configuration is taken from .env (st.secrets unavailable)")
 
     url = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}"
-    return create_engine(url, pool_pre_ping=True)
+
+    try:
+        engine = create_engine(url, pool_pre_ping=True)
+        logger.info(f"Database engine created for host={host} db={dbname}")
+        return engine
+        
+    except Exception as e:
+        logger.error(f"Failed to create database engine: {e}", exc_info=True)
+        raise
 
 
 def run_query(sql: str, params: dict = None) -> pd.DataFrame:
     """Jalankan query SQL dan kembalikan hasilnya sebagai DataFrame."""
-    engine = get_engine()
-    with engine.connect() as conn:
-        result = conn.execute(text(sql), params or {})
-        return pd.DataFrame(result.fetchall(), columns=result.keys())
+    try:
+        engine = get_engine()
+        with engine.connect() as conn:
+            result = conn.execute(text(sql), params or {})
+            df = pd.DataFrame(result.fetchall(), columns=result.keys())
+            logger.info(f"Query successful, {len(df)} rows returned | params={params}")
+            return df
+        
+    except Exception as e:
+        logger.error(f"Query failed | params={params} | error: {e}", exc_info=True)
+        raise RuntimeError("Failed to execute database query: {e}") from e
 
 
 # ════════════════════════════════════════════════════════
@@ -74,9 +98,12 @@ def get_kpi_summary(date_from: str, date_to: str) -> dict:
           AND so.date_order::date BETWEEN :date_from AND :date_to
     """
     df = run_query(sql, {"date_from": date_from, "date_to": date_to})
+
     if df.empty:
         return {}
+    
     row = df.iloc[0]
+
     return {
         "jumlah_order"    : int(row["jumlah_order"]),
         "jumlah_pelanggan": int(row["jumlah_pelanggan"]),
@@ -93,21 +120,28 @@ def get_kpi_vs_period(date_from: str, date_to: str,
     Bandingkan KPI periode sekarang vs periode sebelumnya
     untuk menghitung delta (naik/turun).
     """
-    now  = get_kpi_summary(date_from, date_to)
-    prev = get_kpi_summary(prev_from, prev_to)
+    try:
+        now  = get_kpi_summary(date_from, date_to)
+        prev = get_kpi_summary(prev_from, prev_to)
 
-    def delta_pct(curr, past):
-        if past == 0:
-            return None
-        return round((curr - past) / past * 100, 1)
+        def delta_pct(curr, past):
+            if past == 0:
+                return None
+            return round((curr - past) / past * 100, 1)
 
-    return {
-        "revenue_delta"   : delta_pct(now.get("total_revenue",    0), prev.get("total_revenue",    0)),
-        "order_delta"     : delta_pct(now.get("jumlah_order",     0), prev.get("jumlah_order",     0)),
-        "pelanggan_delta" : delta_pct(now.get("jumlah_pelanggan", 0), prev.get("jumlah_pelanggan", 0)),
-        "qty_delta"       : delta_pct(now.get("total_qty",        0), prev.get("total_qty",        0)),
-        **now,
-    }
+        result = {
+            "revenue_delta"   : delta_pct(now.get("total_revenue",    0), prev.get("total_revenue",    0)),
+            "order_delta"     : delta_pct(now.get("jumlah_order",     0), prev.get("jumlah_order",     0)),
+            "pelanggan_delta" : delta_pct(now.get("jumlah_pelanggan", 0), prev.get("jumlah_pelanggan", 0)),
+            "qty_delta"       : delta_pct(now.get("total_qty",        0), prev.get("total_qty",        0)),
+            **now,
+        }
+        logger.info(f"KPI is calculated as success for the period {date_from} to {date_to}")
+        return result
+    
+    except Exception as e:
+        logger.error(f"Gagal hitung KPI vs period | periode={date_from}~{date_to} | error: {e}", exc_info=True)
+        raise
 
 
 # ════════════════════════════════════════════════════════
